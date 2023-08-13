@@ -5,6 +5,7 @@ const initialState: MainState = {
     loader: false,
     notification: "",
     showOK: false,
+    games: [],
 }
 
 export const mainReducer = (state: MainState = initialState, action: MainAction): MainState => {
@@ -15,6 +16,10 @@ export const mainReducer = (state: MainState = initialState, action: MainAction)
             return {...state, notification: action.payload}
         case MainActionTypes.SET_SHOW_OK:
             return {...state, showOK: action.payload}
+        case MainActionTypes.PUSH_GAME:
+            return {...state, games: [...state.games, action.payload] }
+        case MainActionTypes.CLEAR_GAMES:
+            return {...state, games: [] }
         default:
             return state
     }

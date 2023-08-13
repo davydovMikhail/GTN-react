@@ -11,17 +11,24 @@ import { useRequestGameHash } from '../hooks/useRequestGameHash';
 import { useGetRandomNumber } from '../hooks/useGetRandomNumber';
 import { useGetLastHash } from '../hooks/useGetLastHash';
 import { useGetCurrentBlockNumber } from '../hooks/useGetBlockNumber';
+import { useGetMaxWin } from '../hooks/useGetMaxWin';
+import { useGetHashes } from '../hooks/useGetHashes';
+import { useGetGame } from '../hooks/useGetGame';
+import { useTypedSelector } from '../hooks/useTypedSelector';
 import SetInterval from 'set-interval'
+import GameItem from '../components/game-item/gameItem';
 
 const Main = () => {
     const { activateBrowserWallet, account } = useEthers();
-    const { SetNotification, SetLoader, SetShowOk } = useActions();
+    const { SetNotification, SetLoader, SetShowOk, PushGame, ClearGames } = useActions();
+    const {games} = useTypedSelector(state => state.main);
 
     const start: any = useRef();
 
     const [amount, setAmount] = useState('1');
     const [percent, setPercent] = useState('5');
     const [balance, setBalance] = useState(0);
+    const [maxWin, setMaxWin] = useState(0); 
     const firstIteration = useRef(true);
     const getBalanceHook = useGetBalance();
     const claimHook = useClaimTestTokens();
@@ -32,17 +39,49 @@ const Main = () => {
     const playHook = usePlayBid();
     const hashHook = useGetLastHash();
     const blockHook = useGetCurrentBlockNumber();
+    const maxWinHook = useGetMaxWin();
+    const hashesHook = useGetHashes();
+    const gameHook = useGetGame();
 
     useEffect(() => {
         const fetchData = async () => {
-            const balanceAccount = await getBalanceHook(account as string);               
+            const balanceAccount = await getBalanceHook(account as string);   
             setBalance(balanceAccount as number);
         }
         fetchData().catch(console.error);
     }, [account]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const maxWin = await maxWinHook(); 
+            setMaxWin(maxWin as number);
+            await updateLastGames();
+        }
+        fetchData().catch(console.error);
+    },[]);
+
+    async function updateLastGames() {
+        const hashes = await hashesHook() as any[];
+        for(let i = 0; i < hashes.length; i++) {
+            const game = await gameHook(hashes[i]);
+            PushGame(game);
+        }
+    }
+
     async function handlePlay(isGreater: boolean) {
         if (!account) {
             toast.info('First connect your wallet', {
+                position: "top-center",
+                autoClose: 1000,
+                hideProgressBar: true,
+                pauseOnHover: false,
+                draggable: true,
+                theme: "colored",
+            });
+            return;
+        }
+        if (maxWin < (getPossibleWin() as number)) {
+            toast.info('Possible win exceed the max win', {
                 position: "top-center",
                 autoClose: 1000,
                 hideProgressBar: true,
@@ -80,6 +119,10 @@ const Main = () => {
                 }
                 SetShowOk(true);     
                 setBalance(balanceAfter);
+                const maxWin = await maxWinHook(); 
+                setMaxWin(maxWin as number);
+                ClearGames();
+                await updateLastGames();
             }
         }, 500, "checkHash")
     }
@@ -175,7 +218,7 @@ const Main = () => {
         if(Number(percent) < 5 || Number(percent) > 95 || Number(amount) < 1) {
           return "NaN"
         }
-        return (Number(amount) * 100) / Number(percent);
+        return (Number(amount) * 98) / Number(percent);
     }
 
     return (
@@ -190,7 +233,7 @@ const Main = () => {
                                         <div className="space-top"></div>
                                         <div className="tim-container">
                                         <div className="tim-row" id="edit-metric-labels">
-                                            <h2>Guess The Number!!!</h2>
+                                            <h2>Guess The Number!!! Max possible win: {maxWin} </h2>
                                             <legend></legend>
                                             <div className="row">
                                                 <div className="col-md-3">
@@ -267,57 +310,65 @@ const Main = () => {
                                     </div>
                                 </div>
                                 <div className="row">
-                                    <div className="col-md-8 h4" >
-                                        {account ? `Your Wallet: ${account}`: "Click 'Connect Wallet'"}
+                                    <div className="col-md-12 h5" >
+                                        {account ? `WALLET: ${account}`: "Click 'Connect Wallet'"}
                                     </div>
                                 </div>
                                 {account && 
                                     <div className="row">
-                                        <div className="col-md-8 h4" >
-                                            Your balance: {balance} TGT
+                                        <div className="col-md-8 h5" >
+                                            BALANCE: {balance} TGT
                                         </div>
                                     </div>
                                 }
                                 <div className="row">
-                                    <div className="col-md-8 h4" >
+                                    <div className="col-md-8 h5" >
                                         Address token: 0x12a804d83957Dd32E7f8bC997681E7Ecd4920949 
                                     </div>
                                 </div>
                                 <div className="row">
-                                    <div className="col-md-8 h4" >
-                                        Address game: 0x9E0ab0FE2365c1bF5FB98a7035e49c458CC82C63 
+                                    <div className="col-md-8 h5" >
+                                        Address game: 0xeBc187C7Ba3BCeDE5e6C7470A8CA6977A5B29032 
                                     </div>
                                 </div>
-                            
-                                {/* <div className="row">
+                                <div className="row">
+                                    <div className="col-md-8 h5" >
+                                        Commissioner: 0x7770000000000000000000000000000000000777
+                                    </div>
+                                </div>
+                                <div className="row">
                                     <div className="col-md-12">
-                                        <h2>Random numbers</h2>
+                                        <h2>Last Results</h2>
                                     </div>
                                     <div>
-                                        <div className="col-sm-5">
+                                        <div className="col-sm-4">
                                             <div className="form-group">
-                                                <label>Block number</label>
+                                                <label>Address</label>
                                             </div>
                                         </div>
-                                        <div className="col-sm-5">
+                                        <div className="col-sm-1">
                                             <div className="form-group">
-                                                <label>Random number</label>
+                                                <label>Won</label>
+                                            </div>
+                                        </div>
+                                        <div className="col-sm-1">
+                                            <div className="form-group">
+                                                <label>Chance(%)</label>
+                                            </div>
+                                        </div>
+                                        <div className="col-sm-2">
+                                            <div className="form-group">
+                                                <label>Win Sum</label>
+                                            </div>
+                                        </div>
+                                        <div className="col-sm-2">
+                                            <div className="form-group">
+                                                <label>Random Number</label>
                                             </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <div className="col-sm-5">
-                                            <div className="form-group">
-                                                <div className="form-control">1000</div>
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-5">
-                                            <div className="form-group">
-                                                <div className="form-control">100303</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div> */}
+                                    {games.map(block => GameItem(block))}
+                                </div>
                             </div>
                         </div>
                     </div>

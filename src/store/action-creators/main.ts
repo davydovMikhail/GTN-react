@@ -9,3 +9,9 @@ export function SetNotification(notification: string): MainAction {
 export function SetShowOk(showOk: boolean): MainAction {
     return {type: MainActionTypes.SET_SHOW_OK, payload: showOk}
 }
+export function PushGame(game: any): MainAction {
+    return {type: MainActionTypes.PUSH_GAME, payload: game}
+}
+export function ClearGames(): MainAction {
+    return {type: MainActionTypes.CLEAR_GAMES}
+}
