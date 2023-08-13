@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/GTN-react/static/css/main.4322687e.css",
-    "main.js": "/GTN-react/static/js/main.5e5c469b.js",
+    "main.js": "/GTN-react/static/js/main.cb6e6e7b.js",
     "index.html": "/GTN-react/index.html",
     "main.4322687e.css.map": "/GTN-react/static/css/main.4322687e.css.map",
-    "main.5e5c469b.js.map": "/GTN-react/static/js/main.5e5c469b.js.map"
+    "main.cb6e6e7b.js.map": "/GTN-react/static/js/main.cb6e6e7b.js.map"
   },
   "entrypoints": [
     "static/css/main.4322687e.css",
-    "static/js/main.5e5c469b.js"
+    "static/js/main.cb6e6e7b.js"
   ]
 }
